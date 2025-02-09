@@ -1,0 +1,216 @@
+openapi: 3.0.0
+info:
+  title: Backend for Docker containers ping info service
+  version: 0.1.0
+servers:
+- description: Backend
+  url: http://backend
+paths:
+  /pings:
+    get:
+      parameters:
+      - description: "IP контейнера, для которого выдавать список пингов"
+        example: 127.0.0.1
+        explode: true
+        in: query
+        name: container_ip
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Сортировать начиная со старых записей
+        explode: true
+        in: query
+        name: oldest_first
+        required: false
+        schema:
+          type: boolean
+        style: form
+      - description: Возвращать только успешные или неудавшиеся записи
+        explode: true
+        in: query
+        name: success
+        required: false
+        schema:
+          type: boolean
+        style: form
+      - description: Максимальное количество выдаваемых результатов
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+        style: form
+      - description: "Количество результатов, которое необходимо пропустить"
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/PingInfo'
+                type: array
+          description: OK
+        "400":
+          description: Ошибка на стороне пользователя
+        "500":
+          description: Ошибка на стороне сервера
+      summary: Получить информацию о пингах
+    put:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              items:
+                $ref: '#/components/schemas/PingInfo'
+              type: array
+        description: Список результатов пинга
+        required: true
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Ошибка на стороне пользователя
+        "500":
+          description: Ошибка на стороне сервера
+      summary: Загрузить информацию о пингах
+  /pings/aggregate:
+    get:
+      parameters:
+      - description: Сортировать начиная со старых записей
+        explode: true
+        in: query
+        name: oldest_first
+        required: false
+        schema:
+          type: boolean
+        style: form
+      - description: Максимальное количество выдаваемых результатов
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+        style: form
+      - description: "Количество результатов, которое необходимо пропустить"
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          minimum: 0
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/ContainerInfo'
+                type: array
+                x-content-type: application/json
+          description: OK
+        "400":
+          description: Ошибка на стороне пользователя
+        "500":
+          description: Ошибка на стороне сервера
+      summary: Получить информацию о контейнерах и их последнем пинге
+components:
+  parameters:
+    ContainerIP:
+      description: "IP контейнера, для которого выдавать список пингов"
+      example: 127.0.0.1
+      explode: true
+      in: query
+      name: container_ip
+      required: false
+      schema:
+        type: string
+      style: form
+    Limit:
+      description: Максимальное количество выдаваемых результатов
+      explode: true
+      in: query
+      name: limit
+      required: false
+      schema:
+        minimum: 0
+        type: integer
+      style: form
+    Offset:
+      description: "Количество результатов, которое необходимо пропустить"
+      explode: true
+      in: query
+      name: offset
+      required: false
+      schema:
+        minimum: 0
+        type: integer
+      style: form
+    OldestFirst:
+      description: Сортировать начиная со старых записей
+      explode: true
+      in: query
+      name: oldest_first
+      required: false
+      schema:
+        type: boolean
+      style: form
+    FilterSuccess:
+      description: Возвращать только успешные или неудавшиеся записи
+      explode: true
+      in: query
+      name: success
+      required: false
+      schema:
+        type: boolean
+      style: form
+  schemas:
+    ContainerInfo:
+      example:
+        ip: 127.0.0.1
+        last_ping: 2025-02-08T17:17:51.873Z
+        last_success: 2025-02-08T17:17:51.873Z
+      properties:
+        ip:
+          type: string
+        last_ping:
+          format: date-time
+          type: string
+        last_success:
+          format: date-time
+          type: string
+      required:
+      - ip
+      type: object
+    PingInfo:
+      example:
+        ip: 127.0.0.1
+        timestamp: 2025-02-08T17:17:51.873Z
+        success: true
+      properties:
+        container_ip:
+          type: string
+        timestamp:
+          format: date-time
+          type: string
+        success:
+          type: boolean
+      required:
+      - container_ip
+      - success
+      - timestamp
+      type: object

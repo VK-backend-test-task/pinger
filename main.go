@@ -2,14 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
-	swagger "pinger/api"
+	openapi "pinger/api"
 	"sync"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	probing "github.com/prometheus-community/pro-bing"
+	"log"
 )
 
 func main() {
@@ -24,7 +24,9 @@ func main() {
 		panic(err)
 	}
 
-	sw := swagger.NewAPIClient(&swagger.Configuration{BasePath: "http://localhost:3001"})
+	ctx := context.Background()
+
+	sw := openapi.NewAPIClient(&openapi.Configuration{Scheme: "http", Host: "localhost:3001", Servers: []openapi.ServerConfiguration{{}}})
 	wg := &sync.WaitGroup{}
 
 	for _, ctr := range containers {
@@ -43,9 +45,12 @@ func main() {
 					if err != nil || pinger.PacketsRecv == 0 {
 						success = false
 					}
-					_, err = sw.DefaultApi.PingsPut(context.Background(), []swagger.PingInfo{{ContainerIp: nw.IPAddress, Timestamp: time.Now(), Success: success}})
+					_, err = sw.DefaultAPI.PingsPut(ctx).
+						PingInfo([]openapi.PingInfo{{ContainerIp: nw.IPAddress, Timestamp: time.Now(), Success: success}}).
+						Execute()
 					if err != nil {
-						fmt.Println(err)
+						log.Printf("%s", err)
+						return
 					}
 					wg.Done()
 				}()
